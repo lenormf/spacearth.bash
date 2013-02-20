@@ -51,7 +51,7 @@ function main {
 		## Sharpen the image a bit, if possible
 		test ! -z "$(which convert)" \
 			&& convert "$DST" -sharpen 0x1.0 "${DST}.out" \
-			&& mv "${DST}.out" "DST"
+			&& mv "${DST}.out" "$DST"
 		feh --bg-scale "$DST"
 
 		rm -f "$DST"
