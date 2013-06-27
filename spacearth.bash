@@ -23,6 +23,9 @@ FILE_PREFIX=earth_
 ## The pid of a running instance of this script will be stored in that file, in TMP_DIR
 PID_FILE=spacearth.pid
 
+## Maximum amount of tries to fetch the image
+MAX_RETRY=3
+
 function fatal {
 	echo "$@" >&2 && exit 1
 }
@@ -33,11 +36,13 @@ function usage {
 		"[-u <update rate (seconds)> (default: $UPDATE)]" \
 		"[-d <temporary directory> (default: $TMP_DIR)]" \
 		"[-p <file prefix> (default: $FILE_PREFIX)]" \
-		"[-f <pid filename> (default: $PID_FILE)]"
+		"[-f <pid filename> (default: $PID_FILE)]" \
+		"[-t <tries> (default: $MAX_RETRY)]"
 	exit 0
 }
 
 function main {
+	local n_tries=0
 	while true; do
 		test -d "$TMP_DIR" || fatal "No such directory: $TMP_DIR"
 
@@ -48,11 +53,18 @@ function main {
 		## The site filters user agents, and only lets "real browsers" download the pictures
 		wget -o /tmp/log --user-agent='Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0' -O "$DST" "$U"
 
-		## Sharpen the image a bit, if possible
-		test ! -z "$(which convert)" \
-			&& convert "$DST" -sharpen 0x1.0 "${DST}.out" \
-			&& mv "${DST}.out" "$DST"
-		feh --bg-scale "$DST"
+		## If the downloaded image is empty
+		if [ ! -s "$DST" ]; then
+			n_tries=$((n_tries + 1))
+
+			test $n_tries -ge $MAX_RETRY && break
+		else
+			## Sharpen the image a bit, if possible
+			test ! -z "$(which convert)" \
+				&& convert "$DST" -sharpen 0x1.0 "${DST}.out" \
+				&& mv "${DST}.out" "$DST"
+			feh --bg-scale "$DST"
+		fi
 
 		rm -f "$DST"
 
@@ -96,6 +108,10 @@ function set_options {
 				;;
 			f)
 				PID_FILE="$OPTARG"
+				;;
+			t)
+				echo "$OPTARG" | egrep -qo '^[0-9]+$' || fatal "Provided argument $OPTARG is not an number"
+				MAX_RETRY="$OPTARG"
 				;;
 			*)
 				fatal "Invalid option $opt"
