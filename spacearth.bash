@@ -51,7 +51,7 @@ function main {
 		local U="http://static.die.net/earth/mercator-cloudless/${SIZE}.jpg"
 
 		## The site filters user agents, and only lets "real browsers" download the pictures
-		wget -o /tmp/log --user-agent='Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0' -O "$DST" "$U"
+		wget -o /dev/null --user-agent='Mozilla/5.0 (X11; Linux x86_64; rv:18.0) Gecko/20100101 Firefox/18.0' -O "$DST" "$U"
 
 		## If the downloaded image is empty
 		if [ ! -s "$DST" ]; then
